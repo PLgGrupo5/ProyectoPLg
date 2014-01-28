@@ -23,11 +23,11 @@ public class MaquinaP {
     private LinkedList<Number> _pila = null;
     private Number[] _memoriaDatos = null;
 
-    private boolean _finPrograma = false;
-    private String _ultimaOperacion = "";
-    private String _buferSalida = "";
-    private int _errorEjecucion = 0;
-    private String _buferError = "";
+    public boolean _finPrograma = false;
+    public String _ultimaOperacion = "";
+    public String _buferSalida = "";
+    public int _errorEjecucion = 0;
+    public String _buferError = "";
 
     private boolean _visualizaPasos = false;
 
@@ -236,9 +236,13 @@ public class MaquinaP {
         String[] tokens = lineaMod.split(" ");
         String operacion = tokens[0];
 
-        if (operacion.equals("desapila_entrada")) {
+        if (operacion.equals("desapila_valor")) {
+        	return 0;
+        }
+        else if(operacion.equals("desapila_entrada")){
             op_desapila_entrada();
-        } else if (operacion.equals("apila_entrada")) {
+        }
+    	else if (operacion.equals("apila_entrada")) {
             if (tokens[1].toString().contains(".")) {
                 Number numDec = Double.valueOf(tokens[1]);
                 op_apila_entrada(numDec);
@@ -289,15 +293,18 @@ public class MaquinaP {
         } else if (operacion.equals("not")) {
             op_not();
         } else if (operacion.equals("lectura")) {
-            op_lectura();
+        	_buferSalida = op2_lectura();
+        	return 20;
         } else if (operacion.equals("escritura")) {
             op_escritura();
+            return 30;
         } else if (operacion.equals("stop")) {
             op_stop();
         } else {
             _errorEjecucion = 3;
             _buferError = "[Error de ejecucion] :: Operacion Desconocida";
             System.out.println(_buferError);
+            _buferSalida = _buferError;
             return _errorEjecucion;
         }
         _ultimaOperacion = operacion;
@@ -442,7 +449,7 @@ public class MaquinaP {
         Number n1 = _pila.pop();
         if (n2.doubleValue() == 0.0) {
             _errorEjecucion = 1;
-            _buferError = "[Error de ejecucion] :: División por cero";
+            _buferError = "[Error de ejecucion] :: Divisi��n por cero";
             System.out.println(_buferError);
             return _errorEjecucion;
         }
@@ -495,23 +502,31 @@ public class MaquinaP {
         r = (n.intValue() != 0) ? new Integer(0) : new Integer(1);
         _pila.push(r);
     }
+    
+    private String op2_lectura(){
+    	return "Introduzca un numero Entero o Real: \n";
+    }
 
-    private void op_lectura() {
+    public String op_lectura(String cad) {
         try{
             Number r;
-
-            BufferedReader bufLec;
-            String cad = null;
-            bufLec = new BufferedReader(new InputStreamReader(System.in));
+            String resultado = null;
+            //BufferedReader bufLec;
+            //String cad = null;
+            //bufLec = new BufferedReader(new InputStreamReader(System.in));
             boolean entVal = false;
             while (!entVal) {
                 System.out.print("Introduzca un numero Entero o Real: ");
-                cad = bufLec.readLine();
+                //resultado =  "Introduzca un numero Entero o Real: ";
+                //cad = bufLec.readLine();
                 if (cad.matches("0") | cad.matches("[1-9][0-9]*") | cad.matches("0\\.0") | cad.matches("0\\.[0-9]*[1-9]") | cad.matches("[1-9][0-9]*\\.0") | cad.matches("[1-9][0-9]*\\.[0-9]*[1-9]")) {
                     entVal = true;
+                    resultado = "HECHO";
                 } else {
                     System.out.println("Entrada no valida!");
+                    return "Entrada no valida!";
                 }
+                
             }
             System.out.println(cad);
             if (cad.toString().contains(".")) {
@@ -520,9 +535,12 @@ public class MaquinaP {
                 r = Integer.valueOf(cad);
             }
             _pila.push(r);
+            return resultado;
         } catch (Exception e){
             e.printStackTrace();
         }
+		return "HECHO";
+        
     }
 
     private void op_escritura() {

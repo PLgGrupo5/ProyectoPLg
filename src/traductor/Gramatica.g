@@ -33,10 +33,10 @@ COMP1_2;
 NOT_COMP;
 }
 
-{String errDecs="";
-String errorSemantico="";
-String codigoGenerado="";
-String errorSintactico="";}
+{public String errDecs="";
+public String errorSemantico="";
+public String codigoGenerado="";
+public String errorSintactico="";}
 
 sprog  returns [Traductor cod= new Traductor();]/*{Traductor cod;}*/:
 					cod=prog
@@ -241,7 +241,7 @@ exp[TablaSimbolos TBh] returns [Traductor cod=new Traductor();]{Traductor cod1;L
 								cod.setTipo(TBh.tipoResultante(tipoLinea,cod1.getTipo(),2,"="));
 									
 								if(cod.getTipo()=="error")
-									cod.setErr(cod.getErr()+"ERROR L:"+ident.getLine()+", C:"+ident.getColumn()+"--Tipo incompatible para la asignación.\n");
+									cod.setErr(cod.getErr()+"ERROR L:"+ident.getLine()+", C:"+ident.getColumn()+"--Tipo incompatible para la asignacion.\n");
 							
 						}
 						
@@ -318,7 +318,7 @@ racccomp[TablaSimbolos TBh, Traductor codh] returns [Traductor cod=new Traductor
 						
 						
 						cod.setTipo(TBh.tipoResultante(codh.getTipo(),cod1.getTipo(),2,oper));
-						if(cod.getTipo()=="error")cod.setErr(cod.getErr()+"ERROR L:"+linea+", C:"+columna+"--Tipo incompatible para la expresión.\n");
+						if(cod.getTipo()=="error")cod.setErr(cod.getErr()+"ERROR L:"+linea+", C:"+columna+"--Tipo incompatible para la expresion.\n");
 						cod.setCod(cod.getCod()+cod1.getCod()+op);
 						;
 					}
@@ -364,7 +364,7 @@ raccadit[TablaSimbolos TBh, Traductor codh]returns [Traductor cod=new Traductor(
 						}
 						cod2=codh.clone();	
 						cod2.setTipo(TBh.tipoResultante(codh.getTipo(),cod1.getTipo(),2,oper));
-						if(cod2.getTipo()=="error")cod2.setErr(cod2.getErr()+cod1.getErr()+"ERROR L:"+linea+", C:"+columna+"--Tipo incompatible para la operación binaria.\n");
+						if(cod2.getTipo()=="error")cod2.setErr(cod2.getErr()+cod1.getErr()+"ERROR L:"+linea+", C:"+columna+"--Tipo incompatible para la operacion binaria.\n");
 						cod2.setCod(cod2.getCod()+cod1.getCod()+op);
 					}
 					cod=raccadit[TBh,cod2]
@@ -422,7 +422,7 @@ raccmult[TablaSimbolos TBh,Traductor codh]returns [Traductor cod=new Traductor()
 									cod2=codh.clone();
 									cod2.setTipo(TBh.tipoResultante(codh.getTipo(),cod1.getTipo(),2,oper));
 									if(cod2.getTipo()=="error")
-										cod2.setErr(cod2.getErr()+cod1.getErr()+"ERROR L:"+linea+", C:"+columna+"--Tipo incompatible para la operación binaria.\n");
+										cod2.setErr(cod2.getErr()+cod1.getErr()+"ERROR L:"+linea+", C:"+columna+"--Tipo incompatible para la operacion binaria.\n");
 									cod2.setCod(codh.getCod()+cod1.getCod()+op);
 									
 						
@@ -457,7 +457,7 @@ accun[TablaSimbolos TBh] returns [Traductor cod=new Traductor();]{String op,oper
 			 			cod=cod1.clone();	
 			 			cod.setCod(cod.getCod() + op);
 			 			cod.setTipo(TBh.tipoResultante(cod1.getTipo(),"",1,oper));
-						if(cod.getTipo()=="error")cod.setErr(cod.getErr()+"ERROR L:"+linea+", C:"+columna+"--Tipo incompatible para la operación unaria.\n");
+						if(cod.getTipo()=="error")cod.setErr(cod.getErr()+"ERROR L:"+linea+", C:"+columna+"--Tipo incompatible para la operacion unaria.\n");
 			 			
 			 		}
 					| DELIM_PAREN_A
@@ -534,7 +534,7 @@ tipo returns [Traductor tipo=new Traductor();]:
 class MiLexer extends Lexer; options {k=2;}
 //------------------------- Analizador Lexico ------------------------ 
 {
-	String erroresLexicos="";
+	public String erroresLexicos="";
 }
 protected LETRA :('a'..'z') | ('A'..'Z');
 protected DIGITO: '0'..'9';

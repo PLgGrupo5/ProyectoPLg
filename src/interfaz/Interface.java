@@ -1,6 +1,9 @@
 package interfaz;
 
 import java.io.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 //import java.nio.file.FileSystems;
 //import java.nio.file.Files;
 //import java.nio.file.Path;
@@ -12,6 +15,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -20,6 +25,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JFileChooser;
 
+import antlr.ANTLRException;
 import traductor.*;
 //import antlr.ANTLRException;
 //import antlr.CommonAST;
@@ -55,14 +61,16 @@ public class Interface extends JFrame{
 		boolean cargadoPrograma;
 		boolean cargadaTraduccion;
 		
+		int indiceGlobal;
+		boolean esperandoEntrada;
+		
 ////////////////////////////////////////////////////////////////////////////
-	private void compilacion() {
-	/*
+private void compilacion() throws IOException {
+			
 	 	try
 		{
-	
-	 
-			String urlProject = getClass().getClassLoader().getResource(".").getPath();
+	 		String s = taWest.getText();
+	 		String urlProject = getClass().getClassLoader().getResource(".").getPath();
 			urlProject = urlProject + "aux.txt";
             File newTextFile = new File(urlProject);
             FileWriter fw = new FileWriter(newTextFile);
@@ -70,43 +78,114 @@ public class Interface extends JFrame{
             fw.close();
             
 			FileInputStream fis = new FileInputStream(urlProject);
+	 		
+			ByteArrayOutputStream nuestroError = new ByteArrayOutputStream();
+			System.setErr(new PrintStream(nuestroError));
+			System.out.println("Scanning file...");
+			//fis = new FileInputStream(fw);
 			MiLexer scan = new MiLexer(fis);
 			MiParser par = new MiParser(scan);
-			Traductor trad = par.sprog();
-			resultadoCompilacion = trad.getCod();
+			par.sprog();
+			System.out.println(scan.erroresLexicos);
+			cambiarContenidoTxtAreaConsola(this.taSouth.getText() + scan.erroresLexicos);
+//			CommonAST a = (CommonAST)par.getAST();
+			String errorTrat="";
+			if (nuestroError.toString().length()!=0){
+				String[] listaString = nuestroError.toString().split(" ");
+				String loc = listaString [1];
+				String simbolo = listaString [4].split("\n")[0];
+				String linea = loc.split(":")[0];
+				String columna = loc.split(":")[1];
+				errorTrat="Error sintactico en linea: "+ linea+" columna: "+ columna+" simbolo: "+ simbolo+ "\n";
+				System.out.println(errorTrat);
+				cambiarContenidoTxtAreaConsola(this.taSouth.getText() + scan.erroresLexicos);
+			}
+			par.errorSintactico=errorTrat;
+			
+			System.out.println(par.codigoGenerado);
+			cambiarContenidoTxtAreaTraductor(this.taEast.getText() + par.codigoGenerado);
+
+			resultadoCompilacion = par.codigoGenerado;
 			
 			Path path = FileSystems.getDefault().getPath(urlProject);
 			Files.delete(path);
+
 			
-			Console c = System.console();
-			System.out.println(c);
-			cambiarContenidoTxtAreaTraductor(resultadoCompilacion);
-			cambiarContenidoTxtAreaConsola(scan.erroresLexicos);
-		
+			//System.out.println("Resultado ASA: "+a.toStringList());
 		}catch (ANTLRException ae){
-			JOptionPane.showMessageDialog(null,ae.getMessage());
-		}catch (NullPointerException ae){
-			JOptionPane.showMessageDialog(null,ae.getMessage());
-		}catch(FileNotFoundException fnfe){
-			JOptionPane.showMessageDialog(null,"No se encontro el fichero");
-		} catch (UnsupportedEncodingException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			System.err.println(ae.getMessage() + "y aqui intervenimos");
+		}
+		catch(FileNotFoundException fnfe){
+			System.err.println("No se encontr������ el fichero");
+		}
+	}
+	
+	private int ejecucion() throws IOException {
+		String s = resultadoCompilacion;
+		String urlProject = getClass().getClassLoader().getResource(".").getPath();
+		String urlProjectSalida = getClass().getClassLoader().getResource(".").getPath();
+		urlProject = urlProject + "aux.txt";
+		urlProjectSalida = urlProjectSalida + "sal.txt";
+        File newTextFile = new File(urlProject);
+        
+        FileWriter fw = new FileWriter(newTextFile);
+        fw.write(s);
+        fw.close();
+        
+        try {
+			fw = new FileWriter(newTextFile);
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		*/
+        try {
+			fw.write(s);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+        try {
+			fw.close();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		
+		_maqP = new MaquinaP(urlProject, urlProjectSalida);
+        _maqP.visualizaPasos(true);
+        _maqP.hazTodo();
+        ejecucionPaso(0);//Hace la primera llamada para paso por paso
+        return 0;
 	}
 	
-	private int ejecucion() {
-		return _maqP.ejecuta();
-	}
-	
-	private int ejecucionPaso() {
+	private int ejecucionPaso(int indice) {
+		
+		//Aqui ejecutaremos
+		
 //		return _maqP.ejecutaOperacion();
-		return 0;
+		int i = indice;
+        String phrase = resultadoCompilacion;
+        String delims = "\n";
+        String[] tokens = phrase.split(delims);
+        while(_maqP._finPrograma == false){
+        	int resultado;
+        	if(tokens.length == i){
+        		resultado = _maqP.ejecutaOperacion("stop");
+        	}
+        	resultado = _maqP.ejecutaOperacion(tokens[i]);
+        	if(resultado == 20){
+        		//esperando entrada
+        		esperandoEntrada = true;
+        		cambiarContenidoTxtAreaConsola("\n" + _maqP._buferSalida);
+        		return 0;
+        	}
+        	else if(resultado == 30){//escribir
+        		cambiarContenidoTxtAreaConsola("\n" + _maqP._buferSalida);
+        	}
+        	i++;
+        	indiceGlobal=i;
+        }
+        return 1;
 	}
 ////////////////////////////////////////////////////////////////////////////
 
@@ -165,6 +244,7 @@ public class Interface extends JFrame{
 	        this.getContentPane().add(westPanel, "West");
 	        this.getContentPane().add(southPanel, "South");
 	        
+	        esperandoEntrada = false;
 	                
 	        taWest = new JTextArea(contentPrograma, 35, 30);
 	        taWest.setLineWrap(true);
@@ -176,8 +256,33 @@ public class Interface extends JFrame{
 	        eastPanel.add(new JScrollPane(taEast));
 	        
 	        taSouth = new JTextArea(contentConsola, 10, 82);
+	        taSouth.addKeyListener(new KeyAdapter() {
+	            public void keyReleased(KeyEvent e) {
+	                JTextField textField = (JTextField) e.getSource();
+	                String text = textField.getText();
+	                textField.setText(text.toUpperCase());
+	            }
+	 
+	            public void keyTyped(KeyEvent e) {
+	                // TODO: Do something for the keyTyped event
+	            }
+	 
+	            public void keyPressed(KeyEvent e) {
+	            	int key=e.getKeyCode();
+	            	if(esperandoEntrada == true){
+	            		if(key == KeyEvent.VK_ENTER){
+	                
+	            			String[] lines = taSouth.getText().split("\n");
+	            			if("HECHO".equals(_maqP.op_lectura(lines[lines.length-1]))){
+	            				ejecucionPaso(indiceGlobal+1);
+	            			}
+	            		}
+	            	}
+	            }
+	            	
+	        });
 	        taSouth.setLineWrap(true);
-	        taSouth.setEnabled(false);
+	        taSouth.setEnabled(true);
 	        southPanel.add(new JScrollPane(taSouth));
 
 	        this.pack();
@@ -205,10 +310,10 @@ public class Interface extends JFrame{
 		    }
 		    
 		    static String contentPrograma = "Contenedor del codigo de programa\n"
-		    	      + "Aqui se cargara el archivo que contiene el programa,\n" + "O también se podrá escribir un programa\n"
+		    	      + "Aqui se cargara el archivo que contiene el programa,\n" + "O tambi������n se podr������ escribir un programa\n"
 		    	      + "Que cuando pulsemos el boton compilar, en caso de ser correcto y estar bien escrito mostrara el resultado en la vista derecha.";
 
-		    static String contentTraduccion = "Contenedor de la traducción\n"
+		    static String contentTraduccion = "Contenedor de la traducci������n\n"
 		    	      + "Si hemos pulsado el boton de compilar y el texto era correcto,\n" + "aparecera aqui l traduccion del codigo\n"
 		    	      + "traduccion utilizada para ejecutar el codigo, mediante la ejecucion de las diferentes funciones, en nuestro caso dependientes de una pila";
 		    
@@ -246,7 +351,7 @@ public class Interface extends JFrame{
 	
 	public void cambiarContenidoTxtAreaConsola(String result){
 		cargadoPrograma = true;
-		taSouth.setText(result);
+		taSouth.setText(taSouth.getText() + result + "\n");
 	}
 		    
 	private class Oyente implements ActionListener{
@@ -269,7 +374,12 @@ public class Interface extends JFrame{
 			else if (buttonCompilar == e.getSource()){
 				//if(cargadoPrograma == true){
 				/////////////////////////////////////////
-					compilacion();
+					try {
+						compilacion();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 				//}
 				//else{
 				//	JOptionPane.showMessageDialog(null,"Necesitas cargar un programa para poder compilar");
@@ -277,35 +387,12 @@ public class Interface extends JFrame{
 			}
 			else if (buttonEjecutar == e.getSource()){
 				if(cargadaTraduccion == true){
-					String s = resultadoCompilacion;
-					String urlProject = getClass().getClassLoader().getResource(".").getPath();
-					String urlProjectSalida = getClass().getClassLoader().getResource(".").getPath();
-					urlProject = urlProject + "aux.txt";
-					urlProjectSalida = urlProjectSalida + "sal.txt";
-		            File newTextFile = new File(urlProject);
-		            FileWriter fw = null;
 					try {
-						fw = new FileWriter(newTextFile);
+						int salida = ejecucion();
 					} catch (IOException e1) {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
-		            try {
-						fw.write(s);
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-		            try {
-						fw.close();
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-					
-					MaquinaP maq = new MaquinaP(urlProject, urlProjectSalida);
-			        maq.visualizaPasos(true);
-			        maq.hazTodo();
 		      /*      taWest = 
 		                    System.out.print("Pila: ");
 		            -        this.consola.setText(consola.getText() + "Pila: ");
